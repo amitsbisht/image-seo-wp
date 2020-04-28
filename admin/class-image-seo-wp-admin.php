@@ -124,6 +124,7 @@ class Image_Seo_Wp_Admin {
 		}
 		echo '<input type="text" id="imageAltTag" data-id="'. $id . '" value="'. get_post_meta( $id, '_wp_attachment_image_alt', 'true' ) .'">
 		<span class="update_text" style="color:green;display:block;padding: 5px;"></span><input type="hidden" name="action" value="save_img_alt">';
+		wp_nonce_field( 'save_img_alt', 'image_seo_wp_nonce' );
 	}
 
 	/**
@@ -135,10 +136,12 @@ class Image_Seo_Wp_Admin {
 		echo "<script>
 		jQuery(document).ready(function( $ ) {
 			$('#imageAltTag').on('blur', function(e){
+				var nonceVal = $('input[name=image_seo_wp_nonce]')[0].value;
 				var obj = {
 					'alt': e.target.value,
 					'id': e.target.dataset.id,
 					'action': 'save_img_alt',
+					'image_seo_wp_nonce': nonceVal,
 				};
 				$.ajax({
 					type: 'post',
@@ -147,6 +150,11 @@ class Image_Seo_Wp_Admin {
 					dataType: 'json',
 					success: function (data) {
 						$('.update_text').text('Alt Tag Saved!');
+					},
+					error: function (data) {
+						console.log( data.responseText );
+						$('.update_text').css('color', 'red');
+						$('.update_text').text('Error Found');
 					}
 				});
 			});
@@ -160,8 +168,16 @@ class Image_Seo_Wp_Admin {
 	 * @return void
 	 */
 	public function image_seo_alt_ajax_callback() {
-		$updated = update_post_meta( $_POST['id'], '_wp_attachment_image_alt', $_POST['alt'] );
-		echo $updated;
+		if ( 
+			! isset( $_POST['image_seo_wp_nonce'] ) 
+			|| ! wp_verify_nonce( $_POST['image_seo_wp_nonce'], 'save_img_alt' ) 
+		) {
+			print 'Sorry, your nonce did not verify.';
+			exit;
+		} else {
+			$updated = update_post_meta( $_POST['id'], '_wp_attachment_image_alt', $_POST['alt'] );
+			echo $updated;
+		}
 	}
 
 }
