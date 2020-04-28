@@ -1,4 +1,4 @@
-# wp-image-seo
+# Image SEO WP
 
 # Introduction
 
